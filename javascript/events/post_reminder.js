@@ -18,7 +18,7 @@ const options = {
 
 function buildPayload(payload) {
     return {
-        "text": announcement,
+        "text": payload.announcement,
         "channel": channel,
         "username": "torontojs-events-bot",
         "attachments": [
@@ -65,31 +65,26 @@ function postToSlack(slack_payload) {
     req.end();
 };
 
-var creator = 'Toronto JS';
-var announcement = `${creator} announced a new tech meetup`;
-var slack_payload =  buildPayload({
-	location : 'DevHub (46 Spadina Ave, 4th Floor, Toronto, ON, Canada)',
-	summary : 'JS Code Club',
-	link : 'https://www.meetup.com/torontojs/events/238900532/'
-});
-
-var fetch_data =function(){
-    calandar.endpoints.map(function(url) {
+var fetchData =function(){
+    return calandar.endpoints.map(function(url) {
                 return calandar.getContent(url);
             });
 }
 
 const mapFields =function(eventData){
     const json = JSON.parse(eventData);
+    //console.log(json);
     var items = [];
-    if (json.items) {
+    if ( json.items) {
         items = json.items.map(function(data){
             return {
                  status : data.status,
                  summary : data.summary,
                  description : data.description,
                  link : data.description.split('\n')[1],
-                 dateTime : Date.parse(data.start.dateTime)
+                 location : data.location,
+                 dateTime : data.start.dateTime,
+                 iCalUID : data.start.dateTime
             }
         });
     }
@@ -97,12 +92,36 @@ const mapFields =function(eventData){
     return {
         summary: json.summary,
         description: json.description,
+        nextSyncToken: json.nextSyncToken,
         items : items
     }
 }
 
-module.exports.check_for_events = (event, context, callback) => {
+const postTodaysEvents =function(eventCalendar){
+  const calendarEventData = mapFields (eventCalendar);
+  const today =  new Date().setHours(0,0,0,0);
+  const todaysEvents = calendarEventData.items.filter(function(event){
+    return event.status === 'confirmed' && today === (new Date(Date.parse(event.dateTime))).setHours(0,0,0,0)  
+  });
 
-  postToSlack(slack_payload);
-   
+  console.info(`${calendarEventData.summary}: There are ${calendarEventData.items.length} events with ${todaysEvents.length} for today.`);
+  todaysEvents.map(function(event){
+
+    const creator = event.summary.replace('Events - ', '');
+    var payload = buildPayload({
+         announcement : `${calendarEventData.summary} hosted by ${creator} is happening today`,
+         summary : event.summary,
+         location : event.location,
+         link : event.link
+    });
+    return postToSlack(payload);
+  });
+}
+
+module.exports.check_for_events = (event, context, callback) => {
+    Promise.all(fetchData()).then(allEventData => {
+        allEventData.map(function(event){
+            postTodaysEvents(event);
+        });
+    }); 
 };
