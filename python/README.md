@@ -1,7 +1,7 @@
 # TorontoJS Events Slack Bot
 Slack Bot that posts events to slack from the Calendar feeds
 
-Built with AWS Lambda and Python/Node using [serverless ⚡️](https://serverless.com/framework/docs/) 
+Built with AWS Lambda and Python using [serverless ⚡️](https://serverless.com/framework/docs/) 
 
 # Modes of operation
 Function | Operation
