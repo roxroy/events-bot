@@ -1,0 +1,12 @@
+{
+  "name": "torontojs-events-lambda",
+  "version": "1.0.0",
+  "description": "Serverless functions to post TorontoJS events to Slack",
+  "author": "Tharshan",
+  "license": "MIT",
+  "dependencies": {
+    "aws-sdk": "^2.12.0",
+    "serverless-dynamodb-local": "^0.2.18",
+    "serverless-offline": "^3.8.3"
+  }
+}
